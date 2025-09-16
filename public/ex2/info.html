@@ -11,7 +11,7 @@
         <div class="bg-light text-center p-5 mb-4">
             <h2>Choose an option:</h2>
             <label for="limit">Limit:</label>
-            <input id="limit" type="number" min=1 max=5 value=1>
+            <input id="limit" onchange="getData()" type="number" min=1 max=5 value=1>
             <select onchange="getData()" id="type">
                 <option value="customers">Customers</option>
                 <option value="products">Products</option>
@@ -23,9 +23,82 @@
 
         </div>
         <script>
-            function getData() {
- 
+            async function getEndpoint(queryJSON){
+                try{
+                    const response = await axios.get('/data', {
+                        params: queryJSON
+                    })
+                    return response.data;
+                }
+                catch(error){
+                    console.log(error);
+                }
             }
+
+            async function getData() {
+                const type = document.getElementById("type").value;
+                const limit = document.getElementById("limit").value;
+                queryJSON = {
+                    "type": type,
+                    "limit": limit
+                }
+
+                //console.log(queryJSON);
+                const responseData = await getEndpoint(queryJSON);
+                console.log(responseData);
+                createTable(responseData);
+            }
+
+            function createTable(dataObj){
+
+                //CREATE table elements
+                const resultDiv = document.getElementById("result");
+                while (resultDiv.firstChild){
+                    resultDiv.firstChild.remove();
+                }
+                const h2Elem = document.createElement("h2");
+                console.log(dataObj);
+                const h2Val = dataObj["type"];
+                h2Elem.innerText = h2Val;
+                resultDiv.appendChild(h2Elem);
+
+                const tableElement = document.createElement("table");
+                tableElement.className = "table";
+                const tableBody = document.createElement("tbody");
+
+                //create table heading row
+                const trElement = document.createElement("tr");
+                //retrieve the keys from the first object on records array
+                const tbHeadings = Object.keys(dataObj["records"][0]);
+                for (const headingVal of tbHeadings){
+                    const thElem = document.createElement("th");
+                    thElem.innerText = headingVal;
+                    trElement.appendChild(thElem);
+                }
+
+                tableBody.appendChild(trElement);
+                tableElement.appendChild(tableBody);
+                resultDiv.appendChild(tableElement);
+
+                //create table inner content
+                for (let i=0; i<dataObj["records"].length; i++){
+                    const trElem = document.createElement("tr");
+                    for (let j=0; j<tbHeadings.length;j++){
+                        const  tdVal = dataObj["records"][i][tbHeadings[j]];
+                        const tdElem = document.createElement("td");
+                        tdElem.innerText = tdVal;
+                        trElem.appendChild(tdElem)
+                    }
+
+                    tableBody.appendChild(trElem);
+                }
+
+                tableElement.appendChild(tableBody);
+                resultDiv.appendChild(tableElement);
+
+            }
+
+            
 
         </script>
 </body>
